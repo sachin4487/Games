@@ -1,0 +1,717 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Professional Scratch Cards</title>
+    
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><polygon points='50,5 61,40 98,40 68,62 79,96 50,75 21,96 32,62 2,40 39,40' fill='%23FFD700'/></svg>">
+    
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
+    
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    
+<style>
+    :root {
+        --c1-bg: #6a11cb; --c1-fg: #2575fc; --c2-bg: #ff512f; --c2-fg: #dd2476; --c3-bg: #00c9ff; --c3-fg: #92fe9d; --c4-bg: #f96cf7; --c4-fg: #f3c7a0; --c5-bg: #43cea2; --c5-fg: #185a9d; --c6-bg: #ff6e7f; --c6-fg: #bfe9ff; --c7-bg: #c33764; --c7-fg: #1d2671; --c8-bg: #3494e6; --c8-fg: #ec6ead; --c9-bg: #ee9ca7; --c9-fg: #ffdde1; --c10-bg: #a8ff78; --c10-fg: #78ffd6; --c11-bg: #f7971e; --c11-fg: #ffd200; --c12-bg: #e55d87; --c12-fg: #5fc3e4; --c13-bg: #02aab0; --c13-fg: #00cdac; --c14-bg: #da4453; --c14-fg: #89216b; --c15-bg: #614385; --c15-fg: #516395; --c16-bg: #000428; --c16-fg: #004e92; --c17-bg: #4b6cb7; --c17-fg: #182848; --c18-bg: #f857a6; --c18-fg: #ff5858; --c19-bg: #1e3c72; --c19-fg: #2a5298; --c20-bg: #5614b0; --c20-fg: #dbdcd7;
+    }
+
+    body {
+        font-family: 'Poppins', sans-serif;
+        margin: 0;
+        box-sizing: border-box;
+        background-color: #1a202c;
+        overflow: hidden;
+    }
+    
+    #particles-js {
+        position: fixed;
+        width: 100%;
+        height: 100%;
+        top: 0;
+        left: 0;
+        z-index: -1;
+        background-color: #1a202c;
+        background-image: linear-gradient(to bottom right, #1a202c, #2d3748, #4a5568);
+    }
+
+    .main-content {
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        padding: 1rem;
+        min-height: 100vh;
+        position: relative;
+        z-index: 1;
+    }
+
+    .card-wrapper {
+        position: relative;
+        width: 500px;
+        height: 300px;
+        max-width: 90vw;
+        margin-bottom: 2rem;
+    }
+
+    .scratch-container {
+        position: absolute;
+        width: 100%;
+        height: 100%;
+        border-radius: 20px;
+        overflow: hidden;
+        box-shadow: 0 20px 40px rgba(0,0,0,0.3), 0 8px 15px rgba(0,0,0,0.2);
+        visibility: hidden;
+        opacity: 0;
+        transform: scale(0.95) rotateY(10deg);
+        transition: all 0.6s cubic-bezier(0.25, 0.8, 0.25, 1);
+    }
+
+    .scratch-container.active {
+        visibility: visible;
+        opacity: 1;
+        transform: scale(1) rotateY(0deg);
+    }
+    
+    .scratcher-canvas {
+        position: absolute;
+        top: 0; left: 0;
+        z-index: 2;
+        cursor: grabbing;
+    }
+
+    .prize {
+        position: absolute;
+        top: 0; left: 0;
+        width: 100%; height: 100%;
+        color: white;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        text-align: center;
+        padding: 1rem;
+        box-sizing: border-box;
+    }
+    
+    .prize p { margin: 0; font-size: 2rem; font-weight: 700; }
+    
+    #nextBtn {
+        padding: 15px 35px;
+        font-size: 1.1rem;
+        font-weight: 600;
+        color: #fff;
+        background: linear-gradient(45deg, #6a11cb 0%, #2575fc 100%);
+        border: none;
+        border-radius: 50px;
+        cursor: pointer;
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+        transition: all 0.3s ease;
+    }
+    
+    #nextBtn:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 7px 20px rgba(0, 0, 0, 0.25);
+    }
+    
+    #error-message {
+        position: fixed;
+        top: 20px; right: 20px;
+        background-color: #e74c3c;
+        color: white;
+        padding: 15px 25px;
+        border-radius: 10px;
+        box-shadow: 0 5px 15px rgba(231, 76, 60, 0.5);
+        font-weight: 600;
+        z-index: 1002;
+        transform: translateX(120%);
+        transition: transform 0.5s cubic-bezier(0.68, -0.55, 0.27, 1.55);
+    }
+
+    #error-message.show {
+        transform: translateX(0);
+    }
+
+    #card-counter {
+        position: fixed;
+        bottom: 20px;
+        left: 50%;
+        transform: translateX(-50%);
+        background: rgba(0, 0, 0, 0.6);
+        color: white;
+        padding: 10px 20px;
+        border-radius: 20px;
+        font-size: 0.9rem;
+        font-weight: 600;
+        z-index: 1000;
+    }
+    
+    #music-controller {
+        position: fixed;
+        bottom: 20px;
+        right: 20px;
+        background: rgba(0, 0, 0, 0.5);
+        backdrop-filter: blur(10px);
+        padding: 12px 15px;
+        border-radius: 50px;
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        z-index: 1001;
+    }
+
+    #mute-btn {
+        background: none;
+        border: none;
+        color: white;
+        font-size: 1.3rem;
+        cursor: pointer;
+        transition: color 0.3s ease;
+    }
+
+    #mute-btn:hover {
+        color: #2575fc;
+    }
+
+    #volume-slider {
+        -webkit-appearance: none;
+        appearance: none;
+        width: 120px;
+        height: 7px;
+        background: rgba(255, 255, 255, 0.2);
+        outline: none;
+        border-radius: 5px;
+        transition: background 0.3s ease;
+    }
+
+    #volume-slider::-webkit-slider-thumb {
+        -webkit-appearance: none;
+        appearance: none;
+        width: 18px;
+        height: 18px;
+        background: white;
+        border-radius: 50%;
+        cursor: pointer;
+        box-shadow: 0 0 5px rgba(255,255,255,0.5);
+        transition: background 0.3s ease, transform 0.2s ease;
+    }
+
+    #volume-slider::-moz-range-thumb {
+        width: 18px;
+        height: 18px;
+        background: white;
+        border-radius: 50%;
+        cursor: pointer;
+        border: none;
+        box-shadow: 0 0 5px rgba(255,255,255,0.5);
+         transition: background 0.3s ease, transform 0.2s ease;
+    }
+
+    #volume-slider:hover::-webkit-slider-thumb {
+        background: #2575fc;
+    }
+
+    #volume-slider:hover::-moz-range-thumb {
+        background: #2575fc;
+    }
+    
+    .overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background-color: rgba(0, 0, 0, 0.7);
+        backdrop-filter: blur(10px);
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        z-index: 2000;
+        visibility: hidden;
+        opacity: 0;
+        transition: visibility 0s 0.5s, opacity 0.5s linear;
+    }
+
+    .overlay.visible {
+        visibility: visible;
+        opacity: 1;
+        transition-delay: 0s;
+    }
+    
+    .popup-box {
+        background: #fff;
+        color: #333;
+        padding: 40px 50px;
+        border-radius: 20px;
+        text-align: center;
+        box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+        transform: scale(0.7);
+        transition: transform 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
+    }
+
+    .overlay.visible .popup-box {
+        transform: scale(1);
+    }
+
+    .popup-box h2 {
+        font-size: 2.2rem;
+        font-weight: 700;
+        color: #6a11cb;
+        margin: 0 0 10px 0;
+    }
+    
+    .popup-box p {
+        font-size: 1.1rem;
+        margin: 0 0 30px 0;
+    }
+
+    .popup-box .button-group {
+        display: flex;
+        gap: 15px;
+        justify-content: center;
+    }
+    
+    .popup-btn {
+        padding: 12px 30px;
+        font-size: 1rem;
+        font-weight: 600;
+        border: none;
+        border-radius: 50px;
+        cursor: pointer;
+        transition: all 0.3s ease;
+    }
+    
+    #play-again-btn, #confirm-no-btn {
+        color: #fff;
+        background: linear-gradient(45deg, #ff512f 0%, #dd2476 100%);
+    }
+
+    #play-again-btn:hover, #confirm-no-btn:hover {
+        transform: scale(1.05);
+        box-shadow: 0 5px 15px rgba(221, 36, 118, 0.4);
+    }
+
+    #end-exit-btn, #confirm-yes-btn {
+        color: #444;
+        background: #f0f0f0;
+    }
+    
+    #end-exit-btn:hover, #confirm-yes-btn:hover {
+        background: #ddd;
+        transform: scale(1.05);
+    }
+    
+    #main-exit-btn {
+        position: fixed;
+        bottom: 20px;
+        left: 20px;
+        width: 50px;
+        height: 50px;
+        border-radius: 50%;
+        background: rgba(0, 0, 0, 0.5);
+        backdrop-filter: blur(10px);
+        border: none;
+        color: white;
+        font-size: 1.3rem;
+        cursor: pointer;
+        z-index: 1001;
+        transition: all 0.3s ease;
+    }
+
+    #main-exit-btn:hover {
+        background: rgba(231, 76, 60, 0.8);
+        transform: scale(1.1);
+    }
+
+    #prize-popup-overlay {
+        position: fixed;
+        top: 0; left: 0; width: 100%; height: 100%;
+        background: rgba(0, 0, 0, 0.8);
+        backdrop-filter: blur(15px);
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        z-index: 4000;
+        visibility: hidden;
+        opacity: 0;
+        transition: visibility 0s 0.5s, opacity 0.5s ease;
+    }
+
+    #prize-popup-overlay.visible {
+        visibility: visible;
+        opacity: 1;
+        transition-delay: 0s;
+    }
+
+    .prize-popup-content {
+        position: relative;
+        text-align: center;
+        color: white;
+        padding: 50px;
+        border-radius: 25px;
+        border: 1px solid rgba(255, 255, 255, 0.18);
+        box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
+        max-width: 80%;
+        transform: scale(0.8);
+        transition: transform 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275), background 0.5s ease;
+    }
+
+    #prize-popup-overlay.visible .prize-popup-content {
+        transform: scale(1);
+    }
+
+    #prize-popup-text {
+        font-size: 2.5rem;
+        font-weight: 700;
+        line-height: 1.4;
+        text-shadow: 0 0 15px rgba(0,0,0,0.5);
+        white-space: pre-wrap;
+    }
+
+    #confetti-canvas {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        z-index: -1;
+    }
+    
+    .style-1 .prize{background-image:linear-gradient(to right,var(--c1-bg),var(--c1-fg))}.style-2 .prize{background-image:linear-gradient(to right,var(--c2-bg),var(--c2-fg))}.style-3 .prize{background-image:linear-gradient(to right,var(--c3-bg),var(--c3-fg))}.style-4 .prize{background-image:linear-gradient(to right,var(--c4-bg),var(--c4-fg))}.style-5 .prize{background-image:linear-gradient(to right,var(--c5-bg),var(--c5-fg))}.style-6 .prize{background-image:linear-gradient(to right,var(--c6-bg),var(--c6-fg))}.style-7 .prize{background-image:linear-gradient(to right,var(--c7-bg),var(--c7-fg))}.style-8 .prize{background-image:linear-gradient(to right,var(--c8-bg),var(--c8-fg))}.style-9 .prize{background-image:linear-gradient(to right,var(--c9-bg),var(--c9-fg))}.style-10 .prize{background-image:linear-gradient(to right,var(--c10-bg),var(--c10-fg))}.style-11 .prize{background-image:linear-gradient(to right,var(--c11-bg),var(--c11-fg))}.style-12 .prize{background-image:linear-gradient(to right,var(--c12-bg),var(--c12-fg))}.style-13 .prize{background-image:linear-gradient(to right,var(--c13-bg),var(--c13-fg))}.style-14 .prize{background-image:linear-gradient(to right,var(--c14-bg),var(--c14-fg))}.style-15 .prize{background-image:linear-gradient(to right,var(--c15-bg),var(--c15-fg))}
+
+    @media (max-width: 768px) {
+        .prize p {
+            font-size: 1.5rem;
+        }
+        #nextBtn {
+            padding: 12px 25px;
+            font-size: 1rem;
+        }
+        #card-counter {
+            padding: 8px 15px;
+            font-size: 0.8rem;
+        }
+    }
+    @media (max-width: 480px) {
+        .prize p {
+            font-size: 1.2rem;
+        }
+        .prize-popup-content {
+            padding: 2rem;
+            min-width: unset;
+        }
+        #prize-popup-text {
+            font-size: 1.5rem;
+        }
+    }
+</style>
+</head>
+<body oncontextmenu="return false;">
+
+    <audio id="background-music" loop>
+        <source src="https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3" type="audio/mpeg">
+    </audio>
+    <audio id="scratch-sound">
+        <source src="https://www.soundjay.com/misc/sounds/scratch-1.mp3" type="audio/mpeg">
+    </audio>
+    <audio id="win-sound">
+        <source src="https://www.soundjay.com/human/sounds/crowd-cheer-1.mp3" type="audio/mpeg">
+    </audio>
+
+    <div id="particles-js"></div>
+    
+    <div class="main-content">
+        <div id="error-message"></div>
+        <div class="card-wrapper"></div>
+        <button id="nextBtn">Next Card</button>
+        <div id="card-counter"></div>
+    </div>
+    
+    <div id="music-controller">
+        <button id="mute-btn"><i class="fas fa-volume-high"></i></button>
+        <input type="range" id="volume-slider" min="0" max="1" step="0.01" value="0.5">
+    </div>
+
+    <button id="main-exit-btn" title="Exit Game">
+        <i class="fa-solid fa-right-from-bracket"></i>
+    </button>
+    
+    <div id="end-message-overlay" class="overlay">
+        <div class="popup-box">
+            <h2>Congratulations!</h2>
+            <p>You've scratched all the cards. We hope you enjoyed the game!</p>
+            <div class="button-group">
+                <button id="end-exit-btn" class="popup-btn">Exit</button>
+                <button id="play-again-btn" class="popup-btn">Play Again</button>
+            </div>
+        </div>
+    </div>
+    
+    <div id="confirm-exit-overlay" class="overlay">
+        <div class="popup-box">
+            <h2>Exit Game</h2>
+            <p>Are you sure you want to exit?</p>
+            <div class="button-group">
+                <button id="confirm-yes-btn" class="popup-btn">Leave</button>
+                <button id="confirm-no-btn" class="popup-btn">Stay</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="prize-popup-overlay">
+        <div class="prize-popup-content">
+            <canvas id="confetti-canvas"></canvas>
+            <div id="prize-popup-text"></div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/particles.js/2.0.0/particles.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+
+    <script>
+        particlesJS('particles-js', {
+            "particles": {"number": {"value": 60, "density": {"enable": true, "value_area": 800}},"color": {"value": "#ffffff"},"shape": {"type": "circle"},"opacity": {"value": 0.5, "random": true, "anim": {"enable": true, "speed": 1, "opacity_min": 0.1}},"size": {"value": 3, "random": true},"line_linked": {"enable": true, "distance": 150, "color": "#ffffff", "opacity": 0.4},"move": {"enable": true, "speed": 2, "direction": "none", "out_mode": "out"}},
+            "interactivity": {"detect_on": "canvas","events": {"onhover": {"enable": true, "mode": "repulse"}, "onclick": {"enable": true, "mode": "push"}}},
+            "retina_detect": true
+        });
+
+        document.addEventListener('DOMContentLoaded', () => {
+            const cardWrapper = document.querySelector('.card-wrapper');
+            const nextBtn = document.getElementById('nextBtn');
+            const errorMessage = document.getElementById('error-message');
+            const cardCounter = document.getElementById('card-counter');
+            const backgroundMusic = document.getElementById('background-music');
+            const scratchSound = document.getElementById('scratch-sound');
+            const winSound = document.getElementById('win-sound');
+            const muteBtn = document.getElementById('mute-btn');
+            const volumeSlider = document.getElementById('volume-slider');
+            const endMessageOverlay = document.getElementById('end-message-overlay');
+            const playAgainBtn = document.getElementById('play-again-btn');
+            const endExitBtn = document.getElementById('end-exit-btn');
+            const mainExitBtn = document.getElementById('main-exit-btn');
+            const confirmExitOverlay = document.getElementById('confirm-exit-overlay');
+            const confirmYesBtn = document.getElementById('confirm-yes-btn');
+            const confirmNoBtn = document.getElementById('confirm-no-btn');
+            const prizePopupOverlay = document.getElementById('prize-popup-overlay');
+            const prizePopupContent = document.querySelector('.prize-popup-content');
+            const prizePopupText = document.getElementById('prize-popup-text');
+
+            let isMusicStarted = false;
+            let currentCardIndex = 0;
+            let scratchedCardsCount = 0;
+            
+            const cardData = [                   
+                { text: "કોણ કોને કહે છે?.", styleClass: "style-1", pattern: 'lines', colors: {bg: '#6a11cb', fg: '#2575fc'} },
+                { text: "પ્રશ્ન-જવાબ.", styleClass: "style-2", pattern: 'dots', colors: {bg: '#ff512f', fg: '#dd2476'} },
+                { text: "પાત્ર-સૂચિ.", styleClass: "style-3", pattern: 'crosshatch', colors: {bg: '#00c9ff', fg: '#92fe9d'} },
+                { text: "પ્રસંગ મનન", styleClass: "style-4", pattern: 'zigzag', colors: {bg: '#f96cf7', fg: '#f3c7a0'} },
+                { text: "પ્રસંગ કથન.", styleClass: "style-5", pattern: 'stars', colors: {bg: '#43cea2', fg: '#185a9d'} },
+                { text: "પ્રસંગ પરથી પ્રસંગ.", styleClass: "style-6", pattern: 'lines', colors: {bg: '#ff6e7f', fg: '#bfe9ff'} },
+                { text: "મને સ્પર્શ્યું...(શા માટે?).", styleClass: "style-7", pattern: 'dots', colors: {bg: '#c33764', fg: '#1d2671'} },
+                { text: "ખરું-ખોટું.", styleClass: "style-8", pattern: 'crosshatch', colors: {bg: '#3494e6', fg: '#ec6ead'} },
+                { text: "આવું બન્યું... કારણ કે...", styleClass: "style-9", pattern: 'zigzag', colors: {bg: '#ee9ca7', fg: '#ffdde1'} },
+                { text: "ઘટના ક્રમ.", styleClass: "style-10", pattern: 'stars', colors: {bg: '#a8ff78', fg: '#78ffd6'} },
+                { text: "મને એમ થાય કે...", styleClass: "style-11", pattern: 'lines', colors: {bg: '#f7971e', fg: '#ffd200'} },
+                { text: "આજે હું શીખ્યો...", styleClass: "style-12", pattern: 'dots', colors: {bg: '#e55d87', fg: '#5fc3e4'} },
+                { text: "હું અને મારો મિત્ર.", styleClass: "style-13", pattern: 'crosshatch', colors: {bg: '#02aab0', fg: '#00cdac'} },
+                { text: "મારો નિર્ણય.", styleClass: "style-14", pattern: 'zigzag', colors: {bg: '#da4453', fg: '#89216b'} },
+                { text: "Behind The Seen.", styleClass: "style-15", pattern: 'stars', colors: {bg: '#614385', fg: '#516395'} },
+                { text: "સંકલન.", styleClass: "style-16", pattern: 'lines', colors: {bg: '#000428', fg: '#004e92'} },
+                // { text: "Don't give up!\nKeep scratching, great prizes are just a scratch away.", styleClass: "style-17", pattern: 'dots', colors: {bg: '#4b6cb7', fg: '#182848'} },
+                // { text: "You are a winner!\nEnjoy 10% cashback on your next credit card payment.", styleClass: "style-18", pattern: 'crosshatch', colors: {bg: '#f857a6', fg: '#ff5858'} },
+                // { text: "Hot Deal Just For You!\nGet a combo offer on your favorite food items.", styleClass: "style-19", pattern: 'zigzag', colors: {bg: '#1e3c72', fg: '#2a5298'} },
+                // { text: "Congratulations!\nYou are a winner!\nWe have a special surprise for you.", styleClass: "style-20", pattern: 'stars', colors: {bg: '#5614b0', fg: '#dbdcd7'} },
+             ];
+            
+            muteBtn.addEventListener('click', toggleMute);
+            volumeSlider.addEventListener('input', setVolume);
+            playAgainBtn.addEventListener('click', () => location.reload());
+            
+            endExitBtn.addEventListener('click', exitToMainPage);
+            mainExitBtn.addEventListener('click', () => confirmExitOverlay.classList.add('visible'));
+            confirmYesBtn.addEventListener('click', exitToMainPage);
+            confirmNoBtn.addEventListener('click', () => confirmExitOverlay.classList.remove('visible'));
+
+            function tryStartMusic() {
+                if (isMusicStarted) return;
+                backgroundMusic.volume = volumeSlider.value;
+                backgroundMusic.play().catch(() => isMusicStarted = false);
+                isMusicStarted = true;
+                document.body.removeEventListener('click', tryStartMusic, true);
+            }
+            document.body.addEventListener('click', tryStartMusic, true);
+
+            function toggleMute() {
+                backgroundMusic.muted = !backgroundMusic.muted;
+                updateMuteButton();
+            }
+
+            function setVolume(e) {
+                backgroundMusic.volume = e.target.value;
+                backgroundMusic.muted = backgroundMusic.volume === 0;
+                updateMuteButton();
+            }
+
+            function updateMuteButton() {
+                const icon = muteBtn.querySelector('i');
+                if (backgroundMusic.muted || backgroundMusic.volume === 0) {
+                    icon.className = 'fas fa-volume-mute';
+                } else if (backgroundMusic.volume < 0.5) {
+                    icon.className = 'fas fa-volume-low';
+                } else {
+                    icon.className = 'fas fa-volume-high';
+                }
+            }
+
+            function exitToMainPage() {
+                window.location.href = 'index.html';
+            }
+            
+            function showPrizePopup(prizeText, cardColors) {
+                prizePopupText.innerText = prizeText;
+                prizePopupContent.style.background = `linear-gradient(to right, ${cardColors.bg}, ${cardColors.fg})`;
+                
+                prizePopupOverlay.classList.add('visible');
+                winSound.play();
+
+                const canvas = document.getElementById('confetti-canvas');
+                const myConfetti = confetti.create(canvas, { resize: true, useWorker: true });
+
+                const duration = 8 * 1000;
+                const animationEnd = Date.now() + duration;
+                const colors = [cardColors.bg, cardColors.fg, '#ffffff'];
+
+                const interval = setInterval(() => {
+                    const timeLeft = animationEnd - Date.now();
+                    if (timeLeft <= 0) return clearInterval(interval);
+                    const particleCount = 50 * (timeLeft / duration);
+                    myConfetti({ particleCount, startVelocity: 30, spread: 360, origin: { x: Math.random(), y: Math.random() - 0.2 }, colors: colors });
+                }, 250);
+
+                setTimeout(() => prizePopupOverlay.classList.remove('visible'), duration);
+            }
+
+            function createCardElement(index) {
+                const data = cardData[index];
+                const cardContainer = document.createElement('div');
+                cardContainer.className = `scratch-container ${data.styleClass}`;
+                cardContainer.dataset.isRevealed = 'false';
+                cardContainer.innerHTML = `<div class="prize"><p>${data.text}</p></div><canvas class="scratcher-canvas"></canvas>`;
+                cardWrapper.appendChild(cardContainer);
+                setupScratcher(cardContainer, data);
+                return cardContainer;
+            }
+
+            function setupScratcher(container, cardData) {
+                const canvas = container.querySelector('.scratcher-canvas');
+                const ctx = canvas.getContext('2d');
+                let scratchCount = 0;
+                const width = container.clientWidth;
+                const height = container.clientHeight;
+                canvas.width = width;
+                canvas.height = height;
+
+                function drawPattern() {
+                    ctx.fillStyle = '#d1d1d1';
+                    ctx.fillRect(0, 0, width, height);
+                    ctx.font = 'bold 22px "Poppins", sans-serif';
+                    ctx.fillStyle = '#555';
+                    ctx.textAlign = 'center';
+                    ctx.textBaseline = 'middle';
+                    ctx.fillText('SCRATCH HERE', width / 2, height / 2);
+                }
+                
+                drawPattern();
+                
+                let isDrawing = false;
+                
+                const getEventPosition = (event) => {
+                    const rect = canvas.getBoundingClientRect();
+                    const clientX = event.touches ? event.touches[0].clientX : event.clientX;
+                    const clientY = event.touches ? event.touches[0].clientY : event.clientY;
+                    return { x: (clientX - rect.left), y: (clientY - rect.top) };
+                }
+                
+                const revealCard = () => {
+                    if (container.dataset.isRevealed === 'true') return;
+                    container.dataset.isRevealed = 'true';
+                    scratchedCardsCount++;
+                    updateCounter();
+                    
+                    ctx.globalCompositeOperation = 'destination-out';
+                    ctx.fillRect(0, 0, width, height);
+
+                    showPrizePopup(cardData.text, cardData.colors);
+
+                    if (scratchedCardsCount === cardData.length) {
+                        setTimeout(showEndMessage, 800);
+                    }
+                }
+                
+                const scratch = (x, y) => {
+                    if (container.dataset.isRevealed === 'true') return;
+                    scratchSound.currentTime = 0;
+                    scratchSound.play();
+                    ctx.globalCompositeOperation = 'destination-out';
+                    ctx.beginPath();
+                    ctx.arc(x, y, 30, 0, 2 * Math.PI);
+                    ctx.fill();
+                    scratchCount++;
+                    if (scratchCount > 35) { revealCard(); }
+                }
+                
+                const startDrawing = (e) => { isDrawing = true; draw(e); e.preventDefault(); };
+                const stopDrawing = () => isDrawing = false;
+                const draw = (e) => { if (!isDrawing) return; const pos = getEventPosition(e); if (pos) scratch(pos.x, pos.y); e.preventDefault(); };
+
+                canvas.addEventListener('mousedown', startDrawing);
+                canvas.addEventListener('mouseup', stopDrawing);
+                canvas.addEventListener('mouseleave', stopDrawing);
+                canvas.addEventListener('mousemove', draw);
+                canvas.addEventListener('touchstart', startDrawing, { passive: false });
+                canvas.addEventListener('touchend', stopDrawing);
+                canvas.addEventListener('touchmove', draw, { passive: false });
+            }
+            
+            function shuffleArray(array) {
+                for (let i = array.length - 1; i > 0; i--) {
+                    const j = Math.floor(Math.random() * (i + 1));
+                    [array[i], array[j]] = [array[j], array[i]];
+                }
+            }
+            
+            const showCard = (index) => cardElements.forEach((card, i) => card.classList.toggle('active', i === index));
+            
+            const showError = (message) => {
+                errorMessage.textContent = message;
+                errorMessage.classList.add('show');
+                setTimeout(() => errorMessage.classList.remove('show'), 3000);
+            }
+
+            const updateCounter = () => cardCounter.textContent = `Scratched: ${scratchedCardsCount} / ${cardData.length}`;
+            const showEndMessage = () => endMessageOverlay.classList.add('visible');
+
+            nextBtn.addEventListener('click', () => {
+                const currentCard = cardElements[currentCardIndex];
+                if (currentCard.dataset.isRevealed !== 'true') {
+                    showError("Please scratch the card first!");
+                    return;
+                }
+                if (scratchedCardsCount === cardData.length) {
+                    showEndMessage();
+                    return;
+                }
+                currentCardIndex = (currentCardIndex + 1) % cardData.length;
+                showCard(currentCardIndex);
+            });
+
+            shuffleArray(cardData);
+            const cardElements = cardData.map((_, i) => createCardElement(i));
+            updateCounter();
+            showCard(currentCardIndex);
+        });
+    </script>
+</body>
+</html>

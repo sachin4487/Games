@@ -1,0 +1,610 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Random Games</title>
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🎲</text></svg>">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <style>
+        @import url("https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap");
+        :root {
+            --primary-color: #1a023b;
+            --secondary-color: #4a148c;
+            --highlight-color: #ffd700;
+            --dice-bg-color: #f5f5f5;
+            --dice-dot-color: #333;
+        }
+        body {
+            font-family: 'Poppins', sans-serif;
+            background: radial-gradient(circle, var(--secondary-color), var(--primary-color));
+            color: white;
+            margin: 0;
+            padding: 0.5rem;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            overflow: hidden;
+            -webkit-user-select: none;
+           -khtml-user-select: none;
+           -moz-user-select: none;
+           -ms-user-select: none;
+           -o-user-select: none;
+            user-select: none;
+        }
+        .top-bar {
+            width: 100%;
+            max-width: 1200px;
+            display: flex;
+            flex-direction: column; 
+            justify-content: center;
+            align-items: center;
+            padding: 0; 
+            position: relative;
+            flex-shrink: 0;
+            margin-bottom: 0.5rem;
+        }
+        .title {
+            font-size: 2.5rem;
+            font-weight: 700;
+            color: var(--highlight-color);
+            text-shadow: 0 0 10px var(--highlight-color);
+            text-align: center;
+            margin-bottom: 0.5rem;
+        }
+        .menu-bar {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 1rem;
+            background: rgba(0, 0, 0, 0.3);
+            padding: 0.8rem 1.5rem;
+            border-radius: 50px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            backdrop-filter: blur(10px);
+            flex-shrink: 0;
+        }
+        .menu-item {
+            color: white;
+            text-decoration: none;
+            font-size: 1.1rem;
+            font-weight: 500;
+            padding: 10px 22px;
+            border-radius: 30px;
+            transition: background 0.3s, transform 0.2s, color 0.3s;
+            cursor: pointer;
+        }
+        .menu-item.active, .menu-item:hover {
+            background: rgba(255, 255, 255, 0.2);
+            transform: translateY(-3px);
+            color: var(--highlight-color);
+        }
+        
+        .game-content {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            flex-grow: 1; 
+            gap: 1.5rem;
+            width: 100%;
+            padding: 0.5rem 0;
+            box-sizing: border-box;
+            overflow: auto;
+        }
+
+        .game-container {
+            display: none;
+            flex-direction: column;
+            align-items: center;
+            gap: 1.5rem;
+            padding: 0;
+            box-sizing: border-box;
+            max-width: 100%;
+            flex-grow: 1;
+            justify-content: center;
+        }
+
+        .game-container.active {
+            display: flex;
+        }
+        
+        .number-display {
+            width: 180px;
+            height: 180px;
+            background: rgba(0, 0, 0, 0.2);
+            border: 4px solid var(--highlight-color);
+            border-radius: 50%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 4.5rem;
+            font-weight: 700;
+            color: var(--highlight-color);
+            text-shadow: 0 0 20px var(--highlight-color);
+            transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            flex-shrink: 0;
+        }
+        
+        .generate-btn {
+            padding: 15px 40px;
+            font-size: 1.3rem;
+            font-weight: 600;
+            border: none;
+            border-radius: 50px;
+            cursor: pointer;
+            background: linear-gradient(45deg, #ff512f 0%, #dd2476 100%);
+            color: white;
+            transition: transform 0.2s, box-shadow 0.2s;
+            box-shadow: 0 5px 15px rgba(221, 36, 118, 0.4);
+            flex-shrink: 0;
+            max-width: 90%;
+            text-align: center;
+        }
+        .generate-btn:hover {
+            transform: scale(1.05);
+            box-shadow: 0 8px 20px rgba(221, 36, 118, 0.5);
+        }
+        
+        #main-exit-btn {
+            position: fixed; bottom: 20px; left: 20px; width: 50px; height: 50px; border-radius: 50%; background: rgba(0, 0, 0, 0.5); backdrop-filter: blur(10px); border: none; color: white; font-size: 1.3rem; cursor: pointer; z-index: 1001; transition: all 0.3s ease; display: flex; justify-content: center; align-items: center;
+        }
+        #main-exit-btn:hover { background: rgba(231, 76, 60, 0.8); transform: scale(1.1); }
+        .overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(0, 0, 0, 0.7); backdrop-filter: blur(5px); display: flex; justify-content: center; align-items: center; z-index: 2000; visibility: hidden; opacity: 0; transition: visibility 0s 0.5s, opacity 0.5s linear; }
+        .overlay.visible { visibility: visible; opacity: 1; transition-delay: 0s; }
+        .popup-box { background: #fff; color: #333; padding: 40px 50px; border-radius: 20px; text-align: center; box-shadow: 0 10px 30px rgba(0,0,0,0.3); transform: scale(0.7); transition: transform 0.5s cubic-bezier(0.34, 1.56, 0.64, 1); }
+        .overlay.visible .popup-box { transform: scale(1); }
+        .popup-box h2 { font-size: 2.2rem; font-weight: 700; color: #6a11cb; margin: 0 0 10px 0; }
+        .popup-box p { font-size: 1.1rem; margin: 0 0 30px 0; }
+        .popup-box .button-group { display: flex; gap: 15px; justify-content: center; }
+        .popup-btn { padding: 12px 30px; font-size: 1rem; font-weight: 600; border: none; border-radius: 50px; cursor: pointer; transition: all 0.3s ease; }
+        #confirm-no-btn { color: #fff; background: linear-gradient(45deg, #ff512f 0%, #dd2476 100%); }
+        #confirm-yes-btn { color: #444; background: #f0f0f0; }
+
+        /* --- NEW STYLES FOR 3D DICE --- */
+        .dice-container {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 2rem;
+            perspective: 800px;
+            max-width: 100%;
+        }
+
+        .cube {
+            width: 80px;
+            height: 80px;
+            position: relative;
+            transform-style: preserve-3d;
+            transition: transform 0.8s ease-out;
+            transform-origin: 40px 40px 0;
+        }
+
+        .cube.rolling {
+            animation: rolling-dice-3d 0.2s infinite cubic-bezier(0.36, 0.07, 0.19, 0.97);
+        }
+        
+        .cube[data-roll='1'] { transform: rotateX(0deg) rotateY(0deg); }
+        .cube[data-roll='2'] { transform: rotateY(-90deg); }
+        .cube[data-roll='3'] { transform: rotateX(90deg); }
+        .cube[data-roll='4'] { transform: rotateX(-90deg); }
+        .cube[data-roll='5'] { transform: rotateY(90deg); }
+        .cube[data-roll='6'] { transform: rotateY(180deg); }
+
+        @keyframes rolling-dice-3d {
+            from { transform: rotate3d(0, 0, 0, 0deg); }
+            to { transform: rotate3d(var(--x-rot), var(--y-rot), var(--z-rot), 360deg); }
+        }
+
+        .face {
+            position: absolute;
+            width: 80px;
+            height: 80px;
+            background-color: var(--dice-bg-color);
+            color: var(--dice-dot-color);
+            border: 2px solid var(--dice-dot-color);
+            border-radius: 15px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 2.5rem;
+            font-weight: 700;
+        }
+        
+        .face.front  { transform: rotateY(  0deg) translateZ(40px); }
+        .face.right  { transform: rotateY( 90deg) translateZ(40px); }
+        .face.left   { transform: rotateY(-90deg) translateZ(40px); }
+        .face.top    { transform: rotateX( 90deg) translateZ(40px); }
+        .face.bottom { transform: rotateX(-90deg) translateZ(40px); }
+        .face.back   { transform: rotateY(180deg) translateZ(40px); }
+
+        .result-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 1rem;
+            background: rgba(0,0,0,0.3);
+            padding: 1rem;
+            border-radius: 15px;
+            max-width: 90vw;
+            text-align: center;
+            flex-shrink: 1;
+        }
+        #calculation-display {
+            font-size: 1.1rem;
+            font-weight: 600;
+            min-height: 25px;
+        }
+        .final-result-display {
+            width: 120px;
+            height: 120px;
+            background: #2575fc;
+            border: 4px solid #ffd700;
+            border-radius: 50%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 3rem;
+            font-weight: 700;
+            color: #ffd700;
+            text-shadow: 0 0 10px #ffd700;
+            box-shadow: 0 0 20px #2575fc, inset 0 0 10px rgba(255,255,255,0.5);
+            transition: transform 0.3s ease-out;
+            flex-shrink: 1;
+            font-family: monospace;
+        }
+
+        #music-controller {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            background: rgba(0, 0, 0, 0.5);
+            backdrop-filter: blur(10px);
+            padding: 12px 15px;
+            border-radius: 50px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            z-index: 1001;
+        }
+
+        #mute-btn {
+            background: none;
+            border: none;
+            color: white;
+            font-size: 1.3rem;
+            cursor: pointer;
+            transition: color 0.3s ease;
+        }
+
+        #mute-btn:hover {
+            color: #2575fc;
+        }
+
+        #volume-slider {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 120px;
+            height: 7px;
+            background: rgba(255, 255, 255, 0.2);
+            outline: none;
+            border-radius: 5px;
+            transition: background 0.3s ease;
+        }
+
+        #volume-slider::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 18px;
+            height: 18px;
+            background: white;
+            border-radius: 50%;
+            cursor: pointer;
+            box-shadow: 0 0 5px rgba(255,255,255,0.5);
+            transition: background 0.3s ease, transform 0.2s ease;
+        }
+
+        #volume-slider:hover::-webkit-slider-thumb {
+            background: #2575fc;
+        }
+
+        #volume-slider:hover::-moz-range-thumb {
+            background: #2575fc;
+        }
+    </style>
+</head>
+<body>
+    <audio id="dice-roll-sound" src="https://www.soundjay.com/buttons/sounds/button-21.mp3"></audio>
+    <audio id="dice-win-sound" src="https://www.soundjay.com/human/sounds/crowd-cheer-1.mp3"></audio>
+    <audio id="background-music" loop src="https://www.soundhelix.com/examples/mp3/SoundHelix-Song-2.mp3"></audio>
+
+    <div class="top-bar">
+        <h1 class="title">Random Games</h1>
+        <nav class="menu-bar">
+            <a class="menu-item" data-target="random-number-game">Random Number</a>
+            <a class="menu-item active" data-target="dice-game">Dice</a>
+        </nav>
+    </div>
+
+    <div class="game-content">
+        <div class="game-container" id="random-number-game">
+            <div class="number-display" id="number-display">?</div>
+            <button class="generate-btn" id="generate-btn">Generate Number</button>
+        </div>
+
+        <div class="game-container" id="make-arrow-game">
+            <h2>Coming Soon!</h2>
+        </div>
+        
+        <div class="game-container active" id="dice-game">
+            <div class="dice-container" id="dice-container">
+                <div class="cube" data-roll="1">
+                    <div class="face front">1</div>
+                    <div class="face right">2</div>
+                    <div class="face back">6</div>
+                    <div class="face left">5</div>
+                    <div class="face top">3</div>
+                    <div class="face bottom">4</div>
+                </div>
+                <div class="cube" data-roll="1">
+                    <div class="face front">1</div>
+                    <div class="face right">2</div>
+                    <div class="face back">6</div>
+                    <div class="face left">5</div>
+                    <div class="face top">3</div>
+                    <div class="face bottom">4</div>
+                </div>
+                <div class="cube" data-roll="1">
+                    <div class="face front">1</div>
+                    <div class="face right">2</div>
+                    <div class="face back">6</div>
+                    <div class="face left">5</div>
+                    <div class="face top">3</div>
+                    <div class="face bottom">4</div>
+                </div>
+                <div class="cube" data-roll="1">
+                    <div class="face front">1</div>
+                    <div class="face right">2</div>
+                    <div class="face back">6</div>
+                    <div class="face left">5</div>
+                    <div class="face top">3</div>
+                    <div class="face bottom">4</div>
+                </div>
+                <div class="cube" data-roll="1">
+                    <div class="face front">1</div>
+                    <div class="face right">2</div>
+                    <div class="face back">6</div>
+                    <div class="face left">5</div>
+                    <div class="face top">3</div>
+                    <div class="face bottom">4</div>
+                </div>
+                <div class="cube" data-roll="1">
+                    <div class="face front">1</div>
+                    <div class="face right">2</div>
+                    <div class="face back">6</div>
+                    <div class="face left">5</div>
+                    <div class="face top">3</div>
+                    <div class="face bottom">4</div>
+                </div>
+            </div>
+            <div class="result-container">
+                <p id="calculation-display">Roll the dice to get a result!</p>
+                <div class="final-result-display" id="final-result-display">?</div>
+            </div>
+            <button class="generate-btn" id="roll-dice-btn">Roll Dice</button>
+        </div>
+    </div>
+    
+    <button id="main-exit-btn" title="Exit Game">
+        <i class="fa-solid fa-right-from-bracket"></i>
+    </button>
+    
+    <div id="confirm-exit-overlay" class="overlay">
+        <div class="popup-box">
+            <h2>Exit Game</h2>
+            <p>Are you sure you want to exit?</p>
+            <div class="button-group">
+                <button id="confirm-yes-btn" class="popup-btn">Leave</button>
+                <button id="confirm-no-btn" class="popup-btn">Stay</button>
+            </div>
+        </div>
+    </div>
+    
+    <div id="music-controller">
+        <button id="mute-btn"><i class="fas fa-volume-high"></i></button>
+        <input type="range" id="volume-slider" min="0" max="1" step="0.01" value="0.3">
+    </div>
+
+    <script>
+        // Exit Logic
+        const mainExitBtn = document.getElementById('main-exit-btn');
+        const confirmExitOverlay = document.getElementById('confirm-exit-overlay');
+        const confirmYesBtn = document.getElementById('confirm-yes-btn');
+        const confirmNoBtn = document.getElementById('confirm-no-btn');
+
+        mainExitBtn.addEventListener('click', () => confirmExitOverlay.classList.add('visible'));
+        confirmYesBtn.addEventListener('click', () => { window.location.href = 'index.html'; });
+        confirmNoBtn.addEventListener('click', () => confirmExitOverlay.classList.remove('visible'));
+
+        // Tab Switching Logic
+        const menuItems = document.querySelectorAll('.menu-item');
+        const gameContainers = document.querySelectorAll('.game-container');
+        const defaultActiveTab = 'dice-game';
+
+        function showTab(targetId) {
+            menuItems.forEach(i => i.classList.remove('active'));
+            document.querySelector(`.menu-item[data-target="${targetId}"]`).classList.add('active');
+
+            gameContainers.forEach(container => {
+                if (container.id === targetId) {
+                    container.classList.add('active');
+                } else {
+                    container.classList.remove('active');
+                }
+            });
+        }
+
+        menuItems.forEach(item => {
+            item.addEventListener('click', () => {
+                showTab(item.getAttribute('data-target'));
+            });
+        });
+        
+        // Initially show the dice game tab
+        showTab(defaultActiveTab);
+
+        // Random Number Game Logic
+        const numberDisplay = document.getElementById('number-display');
+        const generateBtn = document.getElementById('generate-btn');
+
+        generateBtn.addEventListener('click', () => {
+            const symbols = ['?', '@', '#', '$', '%', '^', '&', '*', '!'];
+            let spinCount = 0;
+            const spinInterval = setInterval(() => {
+                const randomSymbol = symbols[Math.floor(Math.random() * symbols.length)];
+                numberDisplay.textContent = randomSymbol;
+                spinCount++;
+                if (spinCount > 25) { 
+                    clearInterval(spinInterval);
+                    const finalNumber = Math.floor(Math.random() * 200) + 1;
+                    numberDisplay.textContent = finalNumber;
+                }
+            }, 60); 
+        });
+
+        // Dice Game Logic
+        const diceElements = document.querySelectorAll('.cube');
+        const rollDiceBtn = document.getElementById('roll-dice-btn');
+        const calculationDisplay = document.getElementById('calculation-display');
+        const finalResultDisplay = document.getElementById('final-result-display');
+        const diceRollSound = document.getElementById('dice-roll-sound');
+        const diceWinSound = document.getElementById('dice-win-sound');
+
+        function setInitialDiceState() {
+            diceElements.forEach(dice => {
+                const initialRoll = Math.floor(Math.random() * 6) + 1;
+                dice.setAttribute('data-roll', initialRoll);
+            });
+        }
+        
+        const rollDice = () => {
+            rollDiceBtn.disabled = true;
+            diceRollSound.currentTime = 0;
+            diceRollSound.play();
+
+            const diceValues = [];
+            diceElements.forEach(dice => {
+                const roll = Math.floor(Math.random() * 6) + 1;
+                diceValues.push(roll);
+
+                const randomX = Math.floor(Math.random() * 4) + 1;
+                const randomY = Math.floor(Math.random() * 4) + 1;
+                const randomZ = Math.floor(Math.random() * 4) + 1;
+
+                dice.style.setProperty('--x-rot', randomX);
+                dice.style.setProperty('--y-rot', randomY);
+                dice.style.setProperty('--z-rot', randomZ);
+
+                dice.classList.add('rolling');
+                
+                setTimeout(() => {
+                    dice.classList.remove('rolling');
+                    dice.setAttribute('data-roll', roll);
+                }, 1000); 
+            });
+            
+            const rollDuration = 1000;
+            
+            setTimeout(() => {
+                let result = diceValues[0];
+                let calculationString = `${diceValues[0]}`;
+                
+                const operations = ['+', '*', '/']; 
+                for (let i = 1; i < diceValues.length; i++) {
+                    let op = operations[Math.floor(Math.random() * operations.length)];
+                    let nextValue = diceValues[i];
+
+                    if (op === '+') {
+                        result += nextValue;
+                    } else if (op === '*') {
+                        result *= nextValue;
+                    } else if (op === '/') {
+                        if (result % nextValue === 0) {
+                            result /= nextValue;
+                        } else {
+                            op = '+';
+                            result += nextValue;
+                        }
+                    }
+                    calculationString += ` ${op} ${nextValue}`;
+                }
+
+                if (Math.random() > 0.5) {
+                    const subtractionIndex = Math.floor(Math.random() * (diceValues.length - 1)) + 1;
+                    const subtractedValue = diceValues[subtractionIndex];
+                    if (result - subtractedValue >= 0) {
+                        result -= subtractedValue;
+                        calculationString += ` - ${subtractedValue}`;
+                    }
+                }
+                
+                if (result < 1 || result > 200) {
+                     result = Math.floor(Math.random() * 200) + 1;
+                     calculationString = `Final Adjusted Result`;
+                }
+                
+                calculationDisplay.textContent = calculationString;
+                finalResultDisplay.textContent = result;
+                rollDiceBtn.disabled = false;
+                diceWinSound.play();
+
+            }, rollDuration);
+        }
+
+        rollDiceBtn.addEventListener('click', rollDice);
+        
+        // Audio Logic
+        const backgroundMusic = document.getElementById('background-music');
+        const muteBtn = document.getElementById('mute-btn');
+        const volumeSlider = document.getElementById('volume-slider');
+        
+        let isMusicStarted = false;
+
+        function tryStartMusic() {
+            if (isMusicStarted) return;
+            backgroundMusic.volume = volumeSlider.value;
+            backgroundMusic.play().catch(() => isMusicStarted = false);
+            isMusicStarted = true;
+            document.body.removeEventListener('click', tryStartMusic, true);
+        }
+        document.body.addEventListener('click', tryStartMusic, true);
+
+        muteBtn.addEventListener('click', () => {
+            backgroundMusic.muted = !backgroundMusic.muted;
+            updateMuteButton();
+        });
+
+        volumeSlider.addEventListener('input', (e) => {
+            backgroundMusic.volume = e.target.value;
+            backgroundMusic.muted = backgroundMusic.volume === 0;
+            updateMuteButton();
+        });
+
+        function updateMuteButton() {
+            const icon = muteBtn.querySelector('i');
+            if (backgroundMusic.muted || backgroundMusic.volume === 0) {
+                icon.className = 'fas fa-volume-mute';
+            } else if (backgroundMusic.volume < 0.5) {
+                icon.className = 'fas fa-volume-low';
+            } else {
+                icon.className = 'fas fa-volume-high';
+            }
+        }
+        
+        // Set initial state of dice on page load
+        window.addEventListener('load', setInitialDiceState);
+    </script>
+
+</body>
+</html>

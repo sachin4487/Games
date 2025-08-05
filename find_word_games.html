@@ -1,0 +1,1072 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Find Word Puzzle</title>
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>📝</text></svg>">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+<style>
+    @import url("https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap");
+    @import url('https://fonts.googleapis.com/css2?family=Baloo+Bhai+2:wght@700&display=swap');
+    :root {
+        --primary-color: #1a023b;
+        --secondary-color: #4a148c;
+        --highlight-color: #ffd700;
+        --word-search-bg: #f9f9f9;
+        --word-search-border: #4a148c;
+        --danger-color: #e74c3c;
+        --found-word-color: #2ecc71;
+        --suggestion-color: #3498db;
+    }
+    body {
+        font-family: 'Poppins', sans-serif;
+        background: radial-gradient(circle, var(--secondary-color), var(--primary-color));
+        color: white;
+        margin: 0;
+        min-height: 100vh;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: flex-start;
+        overflow: auto;
+        -webkit-user-select: none;
+        -khtml-user-select: none;
+        -moz-user-select: none;
+        -ms-user-select: none;
+        -o-user-select: none;
+        user-select: none;
+        padding: 1rem;
+        box-sizing: border-box;
+    }
+    .top-bar {
+        width: 100%;
+        max-width: 1200px;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        padding: 0 2rem;
+        flex-shrink: 0;
+        z-index: 100;
+        margin-bottom: 1rem;
+        position: relative;
+    }
+    .title {
+        font-size: 2.5rem;
+        font-weight: 700;
+        color: var(--highlight-color);
+        text-shadow: 0 0 10px var(--highlight-color);
+        text-align: center;
+    }
+    .timer-switch-container {
+        position: absolute;
+        right: 2rem;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        background: rgba(0,0,0,0.4);
+        padding: 8px 15px;
+        border-radius: 50px;
+    }
+    #timer-display {
+        font-size: 1.5rem;
+        font-weight: 600;
+        min-width: 80px;
+        text-align: center;
+        transition: color 0.3s, transform 0.3s;
+    }
+    #timer-display.warning {
+        color: var(--danger-color);
+        animation: pulse 1s infinite;
+    }
+    @keyframes pulse {
+        0%, 100% { transform: scale(1); }
+        50% { transform: scale(1.1); }
+    }
+    .switch {
+        position: relative;
+        display: inline-block;
+        width: 60px;
+        height: 34px;
+    }
+    .switch input { display: none; }
+    .slider {
+        position: absolute;
+        cursor: pointer;
+        top: 0; left: 0; right: 0; bottom: 0;
+        background-color: #ccc;
+        transition: .4s;
+        border-radius: 34px;
+    }
+    .slider:before {
+        position: absolute;
+        content: "";
+        height: 26px; width: 26px;
+        left: 4px; bottom: 4px;
+        background-color: white;
+        transition: .4s;
+        border-radius: 50%;
+    }
+    input:checked + .slider { background-color: var(--highlight-color); }
+    input:focus + .slider { box-shadow: 0 0 1px var(--highlight-color); }
+    input:checked + .slider:before { transform: translateX(26px); }
+    .timer-label {
+        font-size: 1rem;
+        font-weight: 600;
+    }
+    .game-content {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        flex-grow: 1;
+        gap: 1.5rem;
+        width: 100%;
+        max-width: 1200px;
+        padding: 0.5rem 0;
+        box-sizing: border-box;
+    }
+    .main-game-area {
+        display: flex;
+        justify-content: center;
+        align-items: stretch;
+        gap: 2rem;
+        width: 100%;
+        max-width: 1200px;
+        flex-grow: 1;
+        padding: 1rem;
+    }
+    .game-box {
+        background: rgba(0,0,0,0.3);
+        border-radius: 15px;
+        padding: 2rem;
+        box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        backdrop-filter: blur(10px);
+        display: flex;
+        flex-direction: column;
+        flex-grow: 1;
+        transition: flex-grow 0.5s ease-in-out, width 0.5s ease-in-out, opacity 0.5s ease-in-out, transform 0.5s ease-in-out;
+    }
+    .puzzle-and-list-container {
+        display: flex;
+        flex-direction: row;
+        align-items: center;
+        gap: 1rem;
+        height: 100%;
+        justify-content: space-around;
+    }
+    .puzzle-grid {
+        display: grid;
+        grid-template-columns: repeat(10, 1fr);
+        gap: 2px;
+        border: 2px solid var(--word-search-border);
+        padding: 5px;
+        background-color: var(--word-search-bg);
+        border-radius: 10px;
+    }
+    .grid-cell {
+        aspect-ratio: 1;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        font-size: 1.2rem;
+        font-weight: 700;
+        color: #333;
+        background-color: #fff;
+        border-radius: 5px;
+        transition: background-color 0.2s, color 0.2s, transform 0.2s, border-radius 0.2s;
+        cursor: pointer;
+        font-family: 'Baloo Bhai 2', cursive;
+    }
+    .grid-cell:hover {
+        transform: scale(1.1);
+        background-color: var(--highlight-color);
+    }
+    .grid-cell.selected {
+        background-color: var(--highlight-color);
+        border-radius: 50%;
+        transform: scale(1.1);
+    }
+    .grid-cell.found {
+        background-color: var(--found-word-color);
+        color: white;
+        box-shadow: 0 0 10px var(--found-word-color);
+        cursor: default;
+        border-radius: 50%;
+    }
+    .grid-cell.incorrect {
+        animation: incorrect-shake 0.3s;
+        background-color: var(--danger-color) !important;
+        color: white !important;
+    }
+    @keyframes incorrect-shake {
+        0%, 100% { transform: translateX(0); }
+        20%, 60% { transform: translateX(-5px); }
+        40%, 80% { transform: translateX(5px); }
+    }
+    .grid-cell.suggestion {
+        background-color: var(--suggestion-color) !important;
+        color: white !important;
+        animation: pulse-suggestion 1s infinite alternate;
+    }
+    @keyframes pulse-suggestion {
+        from { box-shadow: 0 0 5px var(--suggestion-color); }
+        to { box-shadow: 0 0 15px var(--suggestion-color); }
+    }
+    .words-to-find {
+        display: flex;
+        flex-direction: column;
+        gap: 0.5rem;
+        text-align: left;
+        padding: 10px;
+        flex-grow: 1;
+        overflow-y: auto;
+    }
+    .words-to-find h3 {
+        font-family: 'Baloo Bhai 2', cursive;
+        color: var(--highlight-color);
+        text-shadow: 0 0 5px var(--highlight-color);
+        margin-bottom: 0.5rem;
+        text-align: center;
+    }
+    .word-list {
+        list-style: none;
+        padding: 0;
+        margin: 0;
+    }
+    .word-item {
+        font-size: 1.1rem;
+        font-weight: 600;
+        transition: color 0.3s;
+        text-align: center;
+        margin-bottom: 0.5rem;
+    }
+    .word-item.found {
+        color: var(--found-word-color);
+        text-decoration: line-through;
+        opacity: 0.7;
+    }
+    .custom-words-input-container {
+        width: 100%;
+        height: 100%;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        text-align: center;
+        transition: all 0.5s ease-in-out;
+    }
+    .custom-words-input-container h3 {
+        font-family: 'Baloo Bhai 2', cursive;
+        color: var(--highlight-color);
+        text-shadow: 0 0 5px var(--highlight-color);
+        margin-bottom: 1rem;
+    }
+    #custom-words-textarea {
+        width: 100%;
+        height: 200px;
+        padding: 10px;
+        border-radius: 8px;
+        border: 2px solid var(--highlight-color);
+        background-color: rgba(0,0,0,0.2);
+        color: white;
+        font-family: 'Poppins', sans-serif;
+        font-size: 1rem;
+        resize: none;
+        margin-bottom: 1rem;
+        box-sizing: border-box;
+        flex-grow: 1;
+    }
+    .generate-btn {
+        padding: 15px 40px;
+        font-size: 1.3rem;
+        font-weight: 600;
+        border: none;
+        border-radius: 50px;
+        cursor: pointer;
+        background: linear-gradient(45deg, #ff512f 0%, #dd2476 100%);
+        color: white;
+        transition: transform 0.2s, box-shadow 0.2s;
+        box-shadow: 0 5px 15px rgba(221, 36, 118, 0.4);
+        flex-shrink: 0;
+        max-width: 90%;
+        text-align: center;
+    }
+    .generate-btn:hover {
+        transform: scale(1.05);
+        box-shadow: 0 8px 20px rgba(221, 36, 118, 0.5);
+    }
+    #music-controller {
+        position: fixed;
+        bottom: 20px;
+        right: 20px;
+        background: rgba(0, 0, 0, 0.5);
+        backdrop-filter: blur(10px);
+        padding: 12px 15px;
+        border-radius: 50px;
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        z-index: 1001;
+    }
+    #mute-btn {
+        background: none;
+        border: none;
+        color: white;
+        font-size: 1.3rem;
+        cursor: pointer;
+        transition: color 0.3s ease;
+    }
+    #mute-btn:hover {
+        color: #2575fc;
+    }
+    #volume-slider {
+        -webkit-appearance: none;
+        appearance: none;
+        width: 120px;
+        height: 7px;
+        background: rgba(255, 255, 255, 0.2);
+        outline: none;
+        border-radius: 5px;
+        transition: background 0.3s ease;
+    }
+    #volume-slider::-webkit-slider-thumb {
+        -webkit-appearance: none;
+        appearance: none;
+        width: 18px;
+        height: 18px;
+        background: white;
+        border-radius: 50%;
+        cursor: pointer;
+        box-shadow: 0 0 5px rgba(255,255,255,0.5);
+        transition: background 0.3s ease, transform 0.2s ease;
+    }
+    #volume-slider:hover::-webkit-slider-thumb {
+        background: #2575fc;
+    }
+    #volume-slider:hover::-moz-range-thumb {
+        background: #2575fc;
+    }
+    #main-exit-btn {
+        position: fixed; bottom: 20px; left: 20px; width: 50px; height: 50px; border-radius: 50%; background: rgba(0, 0, 0, 0.5); backdrop-filter: blur(10px); border: none; color: white; font-size: 1.3rem; cursor: pointer; z-index: 1001; transition: all 0.3s ease; display: flex; justify-content: center; align-items: center;
+    }
+    #main-exit-btn:hover {
+        background: rgba(231, 76, 60, 0.8); transform: scale(1.1);
+    }
+    .overlay {
+        position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(0, 0, 0, 0.7); backdrop-filter: blur(5px); display: flex; justify-content: center; align-items: center; z-index: 2000; visibility: hidden; opacity: 0; transition: visibility 0s 0.5s, opacity 0.5s linear;
+    }
+    .overlay.visible {
+        visibility: visible; opacity: 1; transition-delay: 0s;
+    }
+    .popup-box {
+        background: #fff; color: #333; padding: 40px 50px; border-radius: 20px; text-align: center; box-shadow: 0 10px 30px rgba(0,0,0,0.3); transform: scale(0.7); transition: transform 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
+    }
+    .overlay.visible .popup-box {
+        transform: scale(1);
+    }
+    .popup-box h2 {
+        font-size: 2.2rem; font-weight: 700; color: #6a11cb; margin: 0 0 10px 0;
+    }
+    .popup-box p {
+        font-size: 1.1rem; margin: 0 0 30px 0;
+    }
+    .popup-box .button-group {
+        display: flex; gap: 15px; justify-content: center;
+    }
+    .popup-btn {
+        padding: 12px 30px; font-size: 1rem; font-weight: 600; border: none; border-radius: 50px; cursor: pointer; transition: all 0.3s ease;
+    }
+    #confirm-no-btn {
+        color: #fff; background: linear-gradient(45deg, #ff512f 0%, #dd2476 100%);
+    }
+    #confirm-yes-btn {
+        color: #444; background: #f0f0f0;
+    }
+    @media (max-width: 768px) {
+        .top-bar {
+            flex-direction: column;
+            padding: 1rem;
+            position: relative;
+        }
+        .title {
+            font-size: 2rem;
+            margin-bottom: 1rem;
+        }
+        .timer-switch-container {
+            position: static;
+            margin-bottom: 1rem;
+        }
+        .main-game-area {
+            flex-direction: column;
+            align-items: center;
+            gap: 1.5rem;
+        }
+        .game-box {
+            padding: 1rem;
+            width: 95%;
+        }
+        .puzzle-and-list-container {
+            flex-direction: column;
+            align-items: center;
+            gap: 1rem;
+        }
+        .puzzle-grid {
+            width: 100%;
+            max-width: 350px;
+        }
+        .words-to-find {
+            text-align: center;
+        }
+        .custom-words-input {
+            position: static;
+            width: 90%;
+            margin: 1rem auto;
+            transform: none;
+            opacity: 1;
+        }
+        #music-controller, #main-exit-btn {
+            position: static;
+            margin: 1rem auto;
+        }
+        .top-bar {
+            flex-direction: column;
+            align-items: center;
+        }
+    }
+    
+    #win-popup-overlay {
+        position: fixed;
+        top: 0; left: 0; width: 100%; height: 100%;
+        background: rgba(0, 0, 0, 0.8);
+        backdrop-filter: blur(10px);
+        display: none;
+        justify-content: center;
+        align-items: center;
+        z-index: 100;
+    }
+
+    #win-popup-overlay.show {
+        display: flex;
+    }
+    
+    .win-popup-content {
+        padding: 3rem;
+        border-radius: 20px;
+        text-align: center;
+        position: relative;
+        transform: scale(0.7);
+        transition: transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1), background 0.5s ease;
+        color: white;
+        box-shadow: 0 0 30px rgba(0,0,0,0.5);
+        min-width: 450px;
+        border: 2px solid;
+        z-index: 101; 
+    }
+
+    .win-popup-content.show {
+        transform: scale(1);
+    }
+
+    .win-background {
+        background: linear-gradient(45deg, #ff6b6b, #feca57, #48dbfb, #1dd1a1, #5f27cd);
+        background-size: 400% 400%;
+        animation: gradient-animation 10s ease infinite;
+    }
+
+    @keyframes gradient-animation {
+        0% { background-position: 0% 50%; }
+        50% { background-position: 100% 50%; }
+        100% { background-position: 0% 50%; }
+    }
+    
+    #confetti-canvas {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        z-index: 100;
+        pointer-events: none;
+    }
+    
+    .puzzle-container-wrapper {
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        flex-grow: 1;
+    }
+
+    #game-over-overlay {
+        position: fixed;
+        top: 0; left: 0; width: 100%; height: 100%;
+        background: rgba(0, 0, 0, 0.8);
+        backdrop-filter: blur(10px);
+        display: none;
+        justify-content: center;
+        align-items: center;
+        z-index: 100;
+    }
+    #game-over-overlay.show {
+        display: flex;
+    }
+    .game-over-content {
+        background: #fff;
+        color: #333;
+        padding: 40px 50px;
+        border-radius: 20px;
+        text-align: center;
+        box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+        transform: scale(0.7);
+        transition: transform 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
+    }
+    #game-over-overlay.show .game-over-content {
+        transform: scale(1);
+    }
+    @media (max-width: 768px) {
+        .top-bar {
+            flex-direction: column;
+            padding: 1rem;
+            position: relative;
+        }
+        .title {
+            font-size: 2rem;
+            margin-bottom: 1rem;
+        }
+        .timer-switch-container {
+            position: static;
+            margin-bottom: 1rem;
+        }
+        .main-game-area {
+            flex-direction: column;
+            align-items: center;
+            gap: 1.5rem;
+        }
+        .game-box {
+            padding: 1rem;
+            width: 95%;
+        }
+        .puzzle-and-list-container {
+            flex-direction: column;
+            align-items: center;
+            gap: 1rem;
+        }
+        .puzzle-grid {
+            width: 100%;
+            max-width: 350px;
+        }
+        .words-to-find {
+            text-align: center;
+        }
+        .custom-words-input-container {
+            width: 100%;
+        }
+        #custom-words-textarea {
+            height: 150px;
+        }
+        #music-controller, #main-exit-btn {
+            position: static;
+            margin: 1rem auto;
+        }
+    }
+</style>
+</head>
+<body>
+    <audio id="background-music" loop src="https://www.soundhelix.com/examples/mp3/SoundHelix-Song-2.mp3"></audio>
+    <audio id="word-found-sound" src="https://www.soundjay.com/misc/sounds/bell-ringing-05.mp3"></audio>
+    <audio id="win-sound" src="https://www.soundjay.com/human/sounds/crowd-cheer-1.mp3"></audio>
+
+    <div class="top-bar">
+        <h2 class="title">Find Word Puzzle</h2>
+        <div class="timer-switch-container">
+            <span class="timer-label">Timer</span>
+            <label class="switch">
+                <input type="checkbox" id="timer-switch" checked>
+                <span class="slider"></span>
+            </label>
+            <span id="timer-display">02:00</span>
+        </div>
+    </div>
+
+    <div class="game-content">
+        <div class="main-game-area">
+            <div class="game-box" id="puzzle-box" style="flex-grow: 7;">
+                <div class="puzzle-container-wrapper">
+                    <div class="puzzle-and-list-container">
+                        <div class="puzzle-grid" id="puzzle-grid"></div>
+                        <div class="words-to-find">
+                            <h3>Words to Find</h3>
+                            <ul id="word-list" class="word-list"></ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="game-box" id="custom-words-input" style="flex-grow: 3;">
+                <div class="custom-words-input-container">
+                    <h3>Add Your Words</h3>
+                    <textarea id="custom-words-textarea" placeholder="Enter words, one per line..."></textarea>
+                    <button class="generate-btn" id="new-puzzle-btn">Create Puzzle</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <button id="main-exit-btn" title="Exit Game">
+        <i class="fa-solid fa-right-from-bracket"></i>
+    </button>
+    
+    <div id="confirm-exit-overlay" class="overlay">
+        <div class="popup-box">
+            <h2>Exit Game</h2>
+            <p>Are you sure you want to exit?</p>
+            <div class="button-group">
+                <button id="confirm-yes-btn" class="popup-btn">Leave</button>
+                <button id="confirm-no-btn" class="popup-btn">Stay</button>
+            </div>
+        </div>
+    </div>
+    
+    <div id="win-popup-overlay">
+        <canvas id="confetti-canvas"></canvas>
+        <div class="win-popup-content popup-box win-background">
+            <h2>Congratulations!</h2>
+            <p>You found all the words!</p>
+            <div class="popup-buttons">
+                <button id="play-again-btn" class="popup-btn">Play Again</button>
+                <button id="close-win-popup" class="popup-btn">Exit</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="game-over-overlay">
+        <div class="game-over-content popup-box">
+            <h2>Time's up!</h2>
+            <p>You Lost! Try again next time.</p>
+            <div class="popup-buttons">
+                <button id="play-again-lost-btn" class="popup-btn">Play Again</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="music-controller">
+        <button id="mute-btn"><i class="fas fa-volume-high"></i></button>
+        <input type="range" id="volume-slider" min="0" max="1" step="0.01" value="0.3">
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+    <script>
+        // Exit Logic
+        const mainExitBtn = document.getElementById('main-exit-btn');
+        const confirmExitOverlay = document.getElementById('confirm-exit-overlay');
+        const confirmYesBtn = document.getElementById('confirm-yes-btn');
+        const confirmNoBtn = document.getElementById('confirm-no-btn');
+        const wordFoundSound = document.getElementById('word-found-sound');
+
+        mainExitBtn.addEventListener('click', () => confirmExitOverlay.classList.add('visible'));
+        confirmYesBtn.addEventListener('click', () => { window.location.href = 'index.html'; });
+        confirmNoBtn.addEventListener('click', () => confirmExitOverlay.classList.remove('visible'));
+
+        // Find Word Game Logic
+        const newPuzzleBtn = document.getElementById('new-puzzle-btn');
+        const puzzleGrid = document.getElementById('puzzle-grid');
+        const wordListElement = document.getElementById('word-list');
+        const customWordsTextarea = document.getElementById('custom-words-textarea');
+        let words = ['MANDIR', 'BAPA', 'GURU', 'SWAMI', 'SEVA'];
+        const gridSize = 10;
+
+        let isDragging = false;
+        let startCell = null;
+        let currentPath = [];
+        let foundWords = new Set();
+        let wordLocations = new Map();
+        let suggestionTimer;
+        let lastWordFoundTime = Date.now();
+        const suggestionDelay = 30000;
+        
+        const winPopupOverlay = document.getElementById('win-popup-overlay');
+        const winSound = document.getElementById('win-sound');
+        const closeWinPopupBtn = document.getElementById('close-win-popup');
+        const playAgainBtn = document.getElementById('play-again-btn');
+        const confettiCanvas = document.getElementById('confetti-canvas');
+        const gameOverOverlay = document.getElementById('game-over-overlay');
+        const playAgainLostBtn = document.getElementById('play-again-lost-btn');
+
+        const timerDisplay = document.getElementById('timer-display');
+        const timerSwitch = document.getElementById('timer-switch');
+        let timerInterval;
+        let totalSeconds = 120;
+
+        function startTimer() {
+            clearInterval(timerInterval);
+            totalSeconds = 120;
+            timerDisplay.classList.remove('warning');
+            timerInterval = setInterval(() => {
+                totalSeconds--;
+                const minutes = String(Math.floor(totalSeconds / 60)).padStart(2, '0');
+                const remainingSeconds = String(totalSeconds % 60).padStart(2, '0');
+                timerDisplay.textContent = `${minutes}:${remainingSeconds}`;
+
+                if (totalSeconds <= 10) {
+                    timerDisplay.classList.add('warning');
+                }
+                
+                if (totalSeconds <= 0) {
+                    clearInterval(timerInterval);
+                    timerDisplay.textContent = '00:00';
+                    if (foundWords.size !== words.length) {
+                        showGameOverPopup();
+                    }
+                }
+            }, 1000);
+        }
+
+        function stopTimer() {
+            clearInterval(timerInterval);
+            timerDisplay.textContent = '02:00';
+            timerDisplay.classList.remove('warning');
+        }
+
+        timerSwitch.addEventListener('change', (e) => {
+            if (e.target.checked) {
+                startTimer();
+            } else {
+                stopTimer();
+            }
+        });
+
+        function createPuzzle(customWords) {
+            const newWords = customWords.map(word => word.toUpperCase().trim()).filter(word => word.length > 0 && word.length <= gridSize);
+            words = newWords.length > 0 ? newWords : ['MANDIR', 'BAPA', 'GURU', 'SWAMI', 'SEVA'];
+            foundWords.clear();
+            wordLocations.clear();
+
+            puzzleGrid.innerHTML = '';
+            wordListElement.innerHTML = '';
+            const grid = Array(gridSize).fill(null).map(() => Array(gridSize).fill(''));
+            const alphabet = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+
+            words.forEach(word => {
+                let placed = false;
+                let attempts = 0;
+                while (!placed && attempts < 100) {
+                    const directions = [
+                        {x: 1, y: 0}, {x: 0, y: 1}, {x: 1, y: 1},
+                        {x: -1, y: 0}, {x: 0, y: -1}, {x: -1, y: -1},
+                        {x: 1, y: -1}, {x: -1, y: 1}
+                    ];
+                    const dir = directions[Math.floor(Math.random() * directions.length)];
+                    const row = Math.floor(Math.random() * gridSize);
+                    const col = Math.floor(Math.random() * gridSize);
+
+                    let canPlace = true;
+                    let currentWordPath = [];
+                    for (let i = 0; i < word.length; i++) {
+                        const newRow = row + i * dir.y;
+                        const newCol = col + i * dir.x;
+                        if (newRow < 0 || newRow >= gridSize || newCol < 0 || newCol >= gridSize || (grid[newRow][newCol] !== '' && grid[newRow][newCol] !== word[i])) {
+                            canPlace = false;
+                            break;
+                        }
+                        currentWordPath.push({row: newRow, col: newCol});
+                    }
+
+                    if (canPlace) {
+                        for (let i = 0; i < word.length; i++) {
+                            const newRow = row + i * dir.y;
+                            const newCol = col + i * dir.x;
+                            grid[newRow][newCol] = word[i];
+                        }
+                        wordLocations.set(word, currentWordPath);
+                        placed = true;
+                    }
+                    attempts++;
+                }
+            });
+
+            for (let r = 0; r < gridSize; r++) {
+                for (let c = 0; c < gridSize; c++) {
+                    if (grid[r][c] === '') {
+                        grid[r][c] = alphabet[Math.floor(Math.random() * alphabet.length)];
+                    }
+                }
+            }
+
+            for (let r = 0; r < gridSize; r++) {
+                for (let c = 0; c < gridSize; c++) {
+                    const cell = document.createElement('div');
+                    cell.classList.add('grid-cell');
+                    cell.textContent = grid[r][c];
+                    cell.dataset.row = r;
+                    cell.dataset.col = c;
+                    puzzleGrid.appendChild(cell);
+                }
+            }
+
+            puzzleGrid.addEventListener('mousedown', handleMouseDown);
+            puzzleGrid.addEventListener('mouseup', handleMouseUp);
+            puzzleGrid.addEventListener('mousemove', handleMouseMove);
+
+            words.forEach(word => {
+                const li = document.createElement('li');
+                li.classList.add('word-item');
+                li.textContent = word;
+                li.dataset.word = word;
+                wordListElement.appendChild(li);
+            });
+            startSuggestionTimer();
+        }
+
+        function startSuggestionTimer() {
+            clearInterval(suggestionTimer);
+            suggestionTimer = setInterval(() => {
+                if (Date.now() - lastWordFoundTime > suggestionDelay) {
+                    showSuggestion();
+                    lastWordFoundTime = Date.now();
+                }
+            }, suggestionDelay);
+        }
+
+        function showSuggestion() {
+            const unfoundWords = words.filter(word => !foundWords.has(word));
+            if (unfoundWords.length === 0) return;
+
+            const wordToSuggest = unfoundWords[Math.floor(Math.random() * unfoundWords.length)];
+            const path = wordLocations.get(wordToSuggest);
+
+            if (path) {
+                const cells = Array.from(puzzleGrid.children);
+                path.forEach(pos => {
+                    const cell = cells.find(c => parseInt(c.dataset.row) === pos.row && parseInt(c.dataset.col) === pos.col);
+                    if (cell) {
+                        cell.classList.add('suggestion');
+                    }
+                });
+
+                setTimeout(() => {
+                    path.forEach(pos => {
+                        const cell = cells.find(c => parseInt(c.dataset.row) === pos.row && parseInt(c.dataset.col) === pos.col);
+                        if (cell) {
+                            cell.classList.remove('suggestion');
+                        }
+                    });
+                }, 5000);
+            }
+        }
+        
+        let pathDirection = { row: 0, col: 0 };
+
+        function handleMouseDown(e) {
+            if (e.target.classList.contains('grid-cell') && !e.target.classList.contains('found')) {
+                isDragging = true;
+                startCell = e.target;
+                currentPath = [startCell];
+                startCell.classList.add('selected');
+                pathDirection = { row: 0, col: 0 };
+            }
+        }
+
+        function handleMouseUp(e) {
+            if (isDragging) {
+                isDragging = false;
+                checkWord();
+            }
+            resetSelection();
+        }
+
+        function handleMouseMove(e) {
+            if (!isDragging || !startCell) return;
+            const targetCell = e.target.closest('.grid-cell');
+            if (targetCell && !targetCell.classList.contains('found') && targetCell !== currentPath[currentPath.length - 1]) {
+                const startRow = parseInt(startCell.dataset.row);
+                const startCol = parseInt(startCell.dataset.col);
+                const currentRow = parseInt(targetCell.dataset.row);
+                const currentCol = parseInt(targetCell.dataset.col);
+        
+                let newPath = [startCell];
+                let dRow = currentRow - startRow;
+                let dCol = currentCol - startCol;
+        
+                const dirRow = dRow !== 0 ? dRow / Math.abs(dRow) : 0;
+                const dirCol = dCol !== 0 ? dCol / Math.abs(dCol) : 0;
+        
+                if (Math.abs(dRow) === Math.abs(dCol) || dRow === 0 || dCol === 0) {
+                    for (let i = 1; i <= Math.max(Math.abs(dRow), Math.abs(dCol)); i++) {
+                        const nextRow = startRow + i * dirRow;
+                        const nextCol = startCol + i * dirCol;
+                        const nextCell = puzzleGrid.querySelector(`[data-row="${nextRow}"][data-col="${nextCol}"]`);
+                        if (nextCell) {
+                            newPath.push(nextCell);
+                        } else {
+                            newPath = [];
+                            break;
+                        }
+                    }
+                } else {
+                    newPath = [];
+                }
+        
+                currentPath.forEach(cell => cell.classList.remove('selected'));
+                currentPath = newPath;
+                currentPath.forEach(cell => cell.classList.add('selected'));
+            }
+        }
+        
+        function checkWord() {
+            if (currentPath.length < 2) return;
+        
+            const selectedWord = currentPath.map(cell => cell.textContent).join('');
+            const reversedWord = currentPath.map(cell => cell.textContent).reverse().join('');
+            
+            let wordFound = false;
+            let foundWord = '';
+        
+            if (words.includes(selectedWord) && !foundWords.has(selectedWord)) {
+                foundWords.add(selectedWord);
+                foundWord = selectedWord;
+                wordFound = true;
+            } else if (words.includes(reversedWord) && !foundWords.has(reversedWord)) {
+                foundWords.add(reversedWord);
+                foundWord = reversedWord;
+                wordFound = true;
+            }
+        
+            if (wordFound) {
+                highlightFoundWord(foundWord);
+                wordFoundSound.currentTime = 0;
+                wordFoundSound.play();
+                lastWordFoundTime = Date.now();
+                if (foundWords.size === words.length) {
+                    showWinPopup();
+                }
+            } else {
+                const incorrectCells = [...currentPath];
+                incorrectCells.forEach(cell => {
+                    cell.classList.add('incorrect');
+                });
+                setTimeout(() => {
+                    incorrectCells.forEach(cell => {
+                        cell.classList.remove('incorrect');
+                    });
+                }, 1000);
+            }
+        }
+        
+
+        function highlightFoundWord(word) {
+            currentPath.forEach(cell => {
+                cell.classList.remove('selected');
+                cell.classList.add('found');
+            });
+
+            const wordItem = document.querySelector(`li[data-word="${word}"]`);
+            if (wordItem) {
+                wordItem.classList.add('found');
+            }
+        }
+
+        function resetSelection() {
+            currentPath.forEach(cell => {
+                if (!cell.classList.contains('found')) {
+                    cell.classList.remove('selected');
+                }
+            });
+            currentPath = [];
+            startCell = null;
+        }
+
+        newPuzzleBtn.addEventListener('click', () => {
+            const customWords = customWordsTextarea.value.split('\n');
+            createPuzzle(customWords);
+            if(timerSwitch.checked) {
+                startTimer();
+            }
+        });
+        
+        function showWinPopup() {
+             winSound.play();
+             winPopupOverlay.classList.add('show');
+             clearInterval(timerInterval);
+             
+             const myConfetti = confetti.create(confettiCanvas, {
+                resize: true,
+                useWorker: true
+             });
+             
+             const duration = 5 * 1000;
+             const animationEnd = Date.now() + duration;
+
+             const interval = setInterval(function() {
+                const timeLeft = animationEnd - Date.now();
+                if (timeLeft <= 0) {
+                    return clearInterval(interval);
+                }
+                const particleCount = 50 * (timeLeft / duration);
+                myConfetti({ particleCount, startVelocity: 30, spread: 360, origin: { x: Math.random(), y: Math.random() - 0.2 } });
+             }, 250);
+        }
+
+        function showGameOverPopup() {
+            gameOverOverlay.classList.add('show');
+            clearInterval(timerInterval);
+        }
+
+        playAgainLostBtn.addEventListener('click', () => {
+            location.reload();
+        });
+        
+        closeWinPopupBtn.addEventListener('click', () => {
+             winPopupOverlay.classList.remove('show');
+        });
+        
+        playAgainBtn.addEventListener('click', () => {
+             location.reload();
+        });
+
+
+        const backgroundMusic = document.getElementById('background-music');
+        const muteBtn = document.getElementById('mute-btn');
+        const volumeSlider = document.getElementById('volume-slider');
+        let isMusicStarted = false;
+
+        function tryStartMusic() {
+            if (isMusicStarted) return;
+            backgroundMusic.volume = volumeSlider.value;
+            backgroundMusic.play().catch(() => isMusicStarted = false);
+            isMusicStarted = true;
+            document.body.removeEventListener('click', tryStartMusic, true);
+        }
+        document.body.addEventListener('click', tryStartMusic, true);
+
+        muteBtn.addEventListener('click', () => {
+            backgroundMusic.muted = !backgroundMusic.muted;
+            updateMuteButton();
+        });
+
+        volumeSlider.addEventListener('input', (e) => {
+            backgroundMusic.volume = e.target.value;
+            backgroundMusic.muted = backgroundMusic.volume === 0;
+            updateMuteButton();
+        });
+
+        function updateMuteButton() {
+            const icon = muteBtn.querySelector('i');
+            if (backgroundMusic.muted || backgroundMusic.volume === 0) {
+                icon.className = 'fas fa-volume-mute';
+            } else if (backgroundMusic.volume < 0.5) {
+                icon.className = 'fas fa-volume-low';
+            } else {
+                icon.className = 'fas fa-volume-high';
+            }
+        }
+
+        window.addEventListener('load', () => {
+            createPuzzle(words);
+            if(timerSwitch.checked) {
+                startTimer();
+            }
+        });
+    </script>
+</body>
+</html>

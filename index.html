@@ -140,16 +140,27 @@
         backdrop-filter: blur(10px);
         width: 100%;
         overflow: hidden; /* Hide the scrollbar */
-        scroll-behavior: smooth;
     }
     
     .menu-items-wrapper {
         display: flex;
         flex-wrap: nowrap;
-        overflow-x: hidden; /* Hide the native scrollbar */
+        overflow-x: auto; /* Enable horizontal scrolling */
         gap: 1rem;
         width: 100%;
+        scroll-behavior: smooth;
+        scroll-snap-type: x mandatory; /* Snap scrolling behavior */
+        -webkit-overflow-scrolling: touch;
+        
+        /* Hide scrollbar for different browsers */
+        -ms-overflow-style: none; /* IE and Edge */
+        scrollbar-width: none; /* Firefox */
     }
+    /* Hide scrollbar for Chrome, Safari and Opera */
+    .menu-items-wrapper::-webkit-scrollbar {
+        display: none;
+    }
+
 
     .menu-item {
         color: white;
@@ -165,7 +176,8 @@
         gap: 12px;
         text-align: left;
         flex-shrink: 0;
-        width: calc(33.33% - 1rem); /* Show 3 items with gap */
+        width: calc(33.33% - 1rem); /* Show 3 items with gap on large screens */
+        scroll-snap-align: start; /* Snap point at the start of each item */
     }
     .menu-item:hover {
         background: var(--highlight-color);
@@ -198,6 +210,14 @@
     }
     
     /* Responsive Design */
+    /* For tablets and smaller laptops */
+    @media (max-width: 1024px) {
+        .menu-item {
+            width: calc(50% - 0.75rem); /* Show 2 items with gap */
+        }
+    }
+
+    /* For mobile phones */
     @media (max-width: 768px) {
         .main-logo {
             width: 100px;
@@ -216,7 +236,7 @@
         .menu-item {
             font-size: 1rem;
             padding: 10px;
-            width: calc(100% - 1rem); /* Show 1 item on mobile */
+            width: calc(100% - 0rem); /* Show 1 item, full width */
             flex-direction: column;
             justify-content: center;
             align-items: center;
@@ -267,6 +287,7 @@
 
     <script src="https://cdn.jsdelivr.net/particles.js/2.0.0/particles.min.js"></script>
     <script>
+        // Particles.js configuration
         particlesJS('particles-js', {
             particles: {
                 number: { value: 80, density: { enable: true, value_area: 800 } },
@@ -281,6 +302,7 @@
             retina_detect: true
         });
 
+        // Welcome message rotation
         const welcomeMessage = document.getElementById('welcome-message');
         const greetings = [
             "સ્વાગતમ્",
@@ -305,11 +327,23 @@
         welcomeMessage.textContent = greetings[0];
         setInterval(changeGreeting, 4000);
         
+        // Horizontal slider functionality
         const menuWrapper = document.getElementById('menuWrapper');
         const prevBtn = document.getElementById('prevBtn');
         const nextBtn = document.getElementById('nextBtn');
 
-        const scrollAmount = 300; // Adjust this value to control how much the slider moves
+        // Calculate scroll amount based on the first item's width + gap
+        let scrollAmount = 0;
+        if (menuWrapper.firstElementChild) {
+            const firstItem = menuWrapper.firstElementChild;
+            const itemWidth = firstItem.offsetWidth;
+            const gap = parseFloat(getComputedStyle(menuWrapper).gap); // Get the gap value
+            // Scroll by one item's width plus its gap
+            scrollAmount = itemWidth + gap; 
+        } else {
+            // Fallback if no items are present
+            scrollAmount = 300; 
+        }
 
         nextBtn.addEventListener('click', () => {
             menuWrapper.scrollBy({
@@ -324,6 +358,7 @@
                 behavior: 'smooth'
             });
         });
+
     </script>
 </body>
 </html>

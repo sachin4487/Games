@@ -24,15 +24,16 @@
         padding: 0;
         box-sizing: border-box;
         font-family: "Poppins", sans-serif;
-       -webkit-user-select: none;
-       -khtml-user-select: none;
-       -moz-user-select: none;
-       -ms-user-select: none;
-       -o-user-select: none;
+        -webkit-user-select: none;
+        -khtml-user-select: none;
+        -moz-user-select: none;
+        -ms-user-select: none;
+        -o-user-select: none;
         user-select: none;
     }
     body {
         display: flex;
+        flex-direction: column; /* Changed to column to manage vertical space */
         justify-content: center;
         align-items: center;
         min-height: 100vh;
@@ -50,15 +51,25 @@
         max-width: 1200px;
         padding: 2rem;
         transition: grid-template-columns 0.5s ease;
+        height: 100%; /* Ensure container fills the vertical space */
+        max-height: 100vh;
     }
     .app-container.controls-hidden {
-        grid-template-columns: 1fr;
+        /* Use Flexbox for centering when controls are hidden */
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        height: 100vh;
+        width: 100%;
     }
     .wheel-section {
         display: flex;
         justify-content: center;
         align-items: center;
         position: relative;
+        overflow: hidden;
+        width: 100%;
+        flex-grow: 1; /* Allows the wheel section to take up available height */
     }
     .wheel-container {
         width: 500px;
@@ -115,7 +126,7 @@
         box-shadow: 0 0 25px rgba(255,255,255,0.8), inset 0 0 10px rgba(0,0,0,0.3);
     }
     .pointer {
-         position: absolute;
+        position: absolute;
         top: -20px;
         left: 50%;
         transform: translateX(-50%);
@@ -245,8 +256,10 @@
         padding: 3rem 4rem;
         border-radius: 20px;
         text-align: center;
-        position: relative;
-        transform: scale(0.7);
+        position: fixed;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%) scale(0.7);
         transition: transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1), background 0.5s ease;
         color: var(--text-color);
         box-shadow: 0 0 30px rgba(0,0,0,0.5);
@@ -255,7 +268,7 @@
         z-index: 101; 
     }
     #result-popup.show .result-content {
-        transform: scale(1);
+        transform: translate(-50%, -50%) scale(1);
     }
     .result-content h2 {
         font-size: 2.8rem;
@@ -396,12 +409,15 @@
         border-radius: 20px;
         text-align: center;
         box-shadow: 0 10px 30px rgba(0,0,0,0.3);
-        transform: scale(0.7);
+        position: fixed;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%) scale(0.7);
         transition: transform 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
     }
 
     .overlay.visible .popup-box {
-        transform: scale(1);
+        transform: translate(-50%, -50%) scale(1);
     }
 
     .popup-box h2 {
@@ -801,35 +817,35 @@
         });
         
         const showWinner = (winner, color) => {
-             winSound.play();
-             resultContent.style.background = `radial-gradient(circle, ${shadeColor(color, 20)}, ${color})`;
-             resultContent.style.borderColor = shadeColor(color, -20);
-             const myConfetti = confetti.create(confettiCanvas, {
+            winSound.play();
+            resultContent.style.background = `radial-gradient(circle, ${shadeColor(color, 20)}, ${color})`;
+            resultContent.style.borderColor = shadeColor(color, -20);
+            const myConfetti = confetti.create(confettiCanvas, {
                 resize: true,
                 useWorker: true
-             });
-             
-             const duration = 3 * 1000;
-             const animationEnd = Date.now() + duration;
+            });
+            
+            const duration = 3 * 1000;
+            const animationEnd = Date.now() + duration;
 
-             const interval = setInterval(function() {
+            const interval = setInterval(function() {
                 const timeLeft = animationEnd - Date.now();
                 if (timeLeft <= 0) {
                     return clearInterval(interval);
                 }
                 const particleCount = 50 * (timeLeft / duration);
                 myConfetti({ particleCount, startVelocity: 30, spread: 360, origin: { x: Math.random(), y: Math.random() - 0.2 }, colors: [color, '#ffffff', shadeColor(color, -20)] });
-             }, 250);
+            }, 250);
 
-             winnerText.textContent = winner;
-             resultPopup.classList.add('show');
+            winnerText.textContent = winner;
+            resultPopup.classList.add('show');
         }
         
         const closeAndReset = () => {
-             resultPopup.classList.remove('show');
-             if(entries.length > 0) {
+            resultPopup.classList.remove('show');
+            if(entries.length > 0) {
                 spinButton.disabled = false;
-             }
+            }
         }
 
         closePopup.addEventListener('click', closeAndReset);
@@ -853,9 +869,9 @@
             R = parseInt(R * (100 + percent) / 100);
             G = parseInt(G * (100 + percent) / 100);
             B = parseInt(B * (100 + percent) / 100);
-            R = (R<255)?R:255;  
-            G = (G<255)?G:255;  
-            B = (B<255)?B:255;  
+            R = (R<255)?R:255; 
+            G = (G<255)?G:255; 
+            B = (B<255)?B:255; 
             const RR = ((R.toString(16).length==1)?"0"+R.toString(16):R.toString(16));
             const GG = ((G.toString(16).length==1)?"0"+G.toString(16):G.toString(16));
             const BB = ((B.toString(16).length==1)?"0"+B.toString(16):B.toString(16));
@@ -881,12 +897,12 @@
         confirmNoBtn.addEventListener('click', () => confirmExitOverlay.classList.remove('visible'));
         
         document.addEventListener('DOMContentLoaded', () => {
-             const urlParams = new URLSearchParams(window.location.search);
-             if (urlParams.get('controls') === 'hidden') {
-                 appContainer.classList.add('controls-hidden');
-                 toggleControlsBtn.querySelector('i').className = 'fa-solid fa-eye-slash';
-             }
-             
+            const urlParams = new URLSearchParams(window.location.search);
+            if (urlParams.get('controls') === 'hidden') {
+                appContainer.classList.add('controls-hidden');
+                toggleControlsBtn.querySelector('i').className = 'fa-solid fa-eye-slash';
+            }
+            
             updateRange();
         });
         

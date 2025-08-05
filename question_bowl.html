@@ -34,6 +34,7 @@
         justify-content: center;
         align-items: center;
         text-align: center;
+        overflow-y: hidden;
     }
     
     .main-container {
@@ -61,7 +62,7 @@
 
     .question-box {
         position: relative;
-        width: calc(25% - 1rem);
+        width: calc(16% - 1rem); /* 8 cards in a row for large screens */
         aspect-ratio: 1 / 1;
         background: linear-gradient(135deg, var(--box-bg-start), var(--box-bg-end));
         border-radius: 12px;
@@ -204,16 +205,17 @@
     .popup-btn { padding: 10px 25px; font-size: 0.9rem; font-weight: 600; border: none; border-radius: 50px; cursor: pointer; transition: all 0.3s ease; box-shadow: 0 2px 8px rgba(0,0,0,0.2); }
     .popup-btn:hover { transform: translateY(-3px); box-shadow: 0 4px 12px rgba(0,0,0,0.3); }
 
+    /* Media Queries for Responsiveness */
     @media (max-width: 1200px) {
         .question-box {
-            width: calc(33.33% - 1rem);
+            width: calc(25% - 1rem); /* 4 cards in a row for medium screens */
         }
     }
-    
+
     @media (max-width: 768px) {
         .main-container { width: 90%; padding: 1.5rem; }
         .question-box {
-            width: calc(50% - 1rem);
+            width: calc(50% - 1rem); /* 2 cards in a row for small screens */
         }
         .box-number { font-size: 2rem; }
         .popup-question { font-size: 1.5rem; }
@@ -222,7 +224,7 @@
     @media (max-width: 480px) {
         .main-container { padding: 1rem; }
         .question-box {
-            width: 100%;
+            width: 28%; /* 1 card in a row for extra-small screens */
         }
         .box-number { font-size: 1.8rem; }
         .popup-content {

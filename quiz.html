@@ -100,6 +100,11 @@
         margin: 0 0 10px 0;
     }
     
+    .popup-box p {
+        font-size: 1.1rem;
+        margin: 0 0 30px 0;
+    }
+
     .popup-box .button-group {
         display: flex;
         gap: 15px;
@@ -332,11 +337,14 @@
             font-size: 1.8rem;
         }
         .popup-box .button-group {
-            flex-direction: column;
-            gap: 10px;
+            display: flex; /* Ensure horizontal display */
+            flex-direction: row; /* Ensure horizontal display */
+            gap: 15px;
+            justify-content: center;
         }
         .popup-btn {
-            width: 100%;
+            width: auto;
+            padding: 12px 20px; /* Adjust padding for side-by-side buttons */
         }
         #music-controller {
             padding: 8px 12px;
